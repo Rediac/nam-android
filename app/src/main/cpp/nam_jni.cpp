@@ -22,7 +22,7 @@ static AAudioStream*  g_inputStream   = nullptr;
 static AAudioStream*  g_outputStream  = nullptr;
 static std::atomic<bool> g_running    {false};
 
-// Audio ring buffer (simple single-producer single-consumer)
+// Audio ring buffer
 static constexpr int  BLOCK_SIZE    = 256;
 static constexpr int  SAMPLE_RATE   = 48000;
 static constexpr int  RING_FRAMES   = 4096;
@@ -31,7 +31,7 @@ static float g_ring[RING_FRAMES]    = {};
 static std::atomic<int> g_writePos  {0};
 static std::atomic<int> g_readPos   {0};
 
-// ── Input callback: mic → ring buffer ────────────────────────────────────────
+// ── Input callback ────────────────────────────────────────────────────────────
 static aaudio_data_callback_result_t inputCallback(
         AAudioStream* /*stream*/, void* /*userData*/,
         void* audioData, int32_t numFrames)
@@ -46,7 +46,7 @@ static aaudio_data_callback_result_t inputCallback(
     return AAUDIO_CALLBACK_RESULT_CONTINUE;
 }
 
-// ── Output callback: ring buffer → NAM → speaker ─────────────────────────────
+// ── Output callback ───────────────────────────────────────────────────────────
 static aaudio_data_callback_result_t outputCallback(
         AAudioStream* /*stream*/, void* /*userData*/,
         void* audioData, int32_t numFrames)
@@ -58,22 +58,29 @@ static aaudio_data_callback_result_t outputCallback(
         return AAUDIO_CALLBACK_RESULT_CONTINUE;
     }
 
-    // Drain ring buffer into a local block
-    std::vector<float> inBuf(numFrames, 0.0f);
+    // Drain ring buffer
+    std::vector<double> inBuf(numFrames, 0.0);
+    std::vector<double> outBuf(numFrames, 0.0);
+    
     int rp  = g_readPos.load(std::memory_order_relaxed);
     int wp  = g_writePos.load(std::memory_order_acquire);
     int avail = wp - rp;
     int copy  = std::min(avail, numFrames);
     for (int i = 0; i < copy; i++) {
-        inBuf[i] = g_ring[rp % RING_FRAMES];
+        inBuf[i] = static_cast<double>(g_ring[rp % RING_FRAMES]);
         rp++;
     }
     g_readPos.store(rp, std::memory_order_release);
 
     try {
-        // nam::DSP::process(input*, output*, nFrames)
-        g_model->process(inBuf.data(), out, numFrames);
-        g_model->finalize(numFrames);
+        double* inputPtr  = inBuf.data();
+        double* outputPtr = outBuf.data();
+        g_model->process(&inputPtr, &outputPtr, numFrames);
+        
+        // Convert back to float
+        for (int i = 0; i < numFrames; i++) {
+            out[i] = static_cast<float>(outBuf[i]);
+        }
     } catch (...) {
         std::memset(out, 0, numFrames * sizeof(float));
     }
@@ -81,7 +88,7 @@ static aaudio_data_callback_result_t outputCallback(
     return AAUDIO_CALLBACK_RESULT_CONTINUE;
 }
 
-// ── Helper: open one AAudio stream ───────────────────────────────────────────
+// ── Helper: open AAudio stream ───────────────────────────────────────────────
 static AAudioStream* openStream(aaudio_direction_t direction,
                                 AAudioStream_dataCallback cb)
 {
@@ -122,11 +129,10 @@ Java_com_rediac_namplayer_NamEngine_nativeLoadModel(JNIEnv* env, jobject, jstrin
     LOGI("Loading NAM model: %s", path);
 
     try {
-        // Enable fast tanh approximation (same as the official plugin)
         nam::activations::Activation::enable_fast_tanh();
-
-        // get_dsp() is the official factory — works for A1 and A2
-        g_model = nam::get_dsp(std::string(path));
+        
+        // Use filesystem::path as required by the API
+        g_model = nam::get_dsp(std::filesystem::path(path));
 
         LOGI("Model loaded OK");
         env->ReleaseStringUTFChars(jpath, path);
@@ -147,15 +153,12 @@ Java_com_rediac_namplayer_NamEngine_nativeStartAudio(JNIEnv*, jobject)
         return JNI_TRUE;
     }
 
-    // Reset ring buffer
     g_writePos.store(0);
     g_readPos.store(0);
 
-    // Open input (mic)
     g_inputStream = openStream(AAUDIO_DIRECTION_INPUT, inputCallback);
     if (!g_inputStream) return JNI_FALSE;
 
-    // Open output (speaker/headphones)
     g_outputStream = openStream(AAUDIO_DIRECTION_OUTPUT, outputCallback);
     if (!g_outputStream) {
         AAudioStream_close(g_inputStream);
@@ -163,7 +166,6 @@ Java_com_rediac_namplayer_NamEngine_nativeStartAudio(JNIEnv*, jobject)
         return JNI_FALSE;
     }
 
-    // Start both
     if (AAudioStream_requestStart(g_inputStream)  != AAUDIO_OK ||
         AAudioStream_requestStart(g_outputStream) != AAUDIO_OK)
     {
