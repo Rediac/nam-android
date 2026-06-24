@@ -19,7 +19,17 @@ jobs:
 
       - name: Force init submodules
         run: |
-          git submodule update --init --recursive --force
+          git submodule sync
+          git submodule update --init --recursive --force --depth 1
+          ls -la app/src/main/cpp/NeuralAmpModelerCore/ || echo "Submodule dir not found, cloning manually..."
+          if [ ! -d "app/src/main/cpp/NeuralAmpModelerCore/NAM" ]; then
+            echo "Manual clone..."
+            rm -rf app/src/main/cpp/NeuralAmpModelerCore
+            git clone --depth 1 https://github.com/sdatkinson/NeuralAmpModelerCore.git app/src/main/cpp/NeuralAmpModelerCore
+            cd app/src/main/cpp/NeuralAmpModelerCore
+            git submodule update --init --recursive --depth 1
+            cd -
+          fi
           ls -la app/src/main/cpp/NeuralAmpModelerCore/NAM/
 
       - name: Setup Java
