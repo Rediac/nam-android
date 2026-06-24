@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:background="#1A1A1A">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NAM Player"
+        android:textSize="30sp"
+        android:textColor="#E0E0E0"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
+
+    <TextView
+        android:id="@+id/tvVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="..."
+        android:textSize="11sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="48dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="MODELO"
+        android:textSize="10sp"
+        android:textColor="#888888"
+        android:letterSpacing="0.15"
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:id="@+id/tvModelName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sin modelo"
+        android:textSize="16sp"
+        android:textColor="#CCCCCC"
+        android:ellipsize="middle"
+        android:singleLine="true"
+        android:layout_marginBottom="40dp"/>
+
+    <Button
+        android:id="@+id/btnLoadNam"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="📂  Cargar archivo .nam"
+        android:textSize="16sp"
+        android:backgroundTint="#2C2C2C"
+        android:textColor="#E0E0E0"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnPlayStop"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="▶  Iniciar"
+        android:textSize="16sp"
+        android:backgroundTint="#B71C1C"
+        android:textColor="#FFFFFF"
+        android:enabled="false"/>
+
+</LinearLayout>
