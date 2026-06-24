@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstring>
 #include <vector>
+#include <cstdio>
 #include <android/log.h>
 #include <aaudio/AAudio.h>
 
@@ -58,7 +59,6 @@ static aaudio_data_callback_result_t outputCallback(
         return AAUDIO_CALLBACK_RESULT_CONTINUE;
     }
 
-    // Drain ring buffer
     std::vector<double> inBuf(numFrames, 0.0);
     std::vector<double> outBuf(numFrames, 0.0);
     
@@ -77,7 +77,6 @@ static aaudio_data_callback_result_t outputCallback(
         double* outputPtr = outBuf.data();
         g_model->process(&inputPtr, &outputPtr, numFrames);
         
-        // Convert back to float
         for (int i = 0; i < numFrames; i++) {
             out[i] = static_cast<float>(outBuf[i]);
         }
@@ -122,26 +121,49 @@ Java_com_rediac_namplayer_NamEngine_nativeGetVersion(JNIEnv* env, jobject)
     return env->NewStringUTF("NAM Player 1.0 (Core v0.5.x / A2)");
 }
 
-extern "C" JNIEXPORT jboolean JNICALL
+extern "C" JNIEXPORT jstring JNICALL
 Java_com_rediac_namplayer_NamEngine_nativeLoadModel(JNIEnv* env, jobject, jstring jpath)
 {
     const char* path = env->GetStringUTFChars(jpath, nullptr);
-    LOGI("Loading NAM model: %s", path);
+
+    // Verificar que el archivo existe
+    FILE* f = fopen(path, "rb");
+    if (!f) {
+        env->ReleaseStringUTFChars(jpath, path);
+        return env->NewStringUTF("ERROR: No se pudo abrir el archivo");
+    }
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fclose(f);
+
+    // Leer header para diagnóstico
+    char header[256] = {};
+    f = fopen(path, "rb");
+    if (f) {
+        fread(header, 1, 255, f);
+        fclose(f);
+    }
 
     try {
         nam::activations::Activation::enable_fast_tanh();
-        
-        // Use filesystem::path as required by the API
         g_model = nam::get_dsp(std::filesystem::path(path));
-
-        LOGI("Model loaded OK");
+        
+        char msg[512];
+        snprintf(msg, sizeof(msg), "OK:%ld", fsize);
         env->ReleaseStringUTFChars(jpath, path);
-        return JNI_TRUE;
+        return env->NewStringUTF(msg);
     } catch (const std::exception& e) {
-        LOGE("Failed to load model: %s", e.what());
+        char msg[512];
+        snprintf(msg, sizeof(msg), "ERROR:%s|HEADER:%.100s", e.what(), header);
         env->ReleaseStringUTFChars(jpath, path);
         g_model.reset();
-        return JNI_FALSE;
+        return env->NewStringUTF(msg);
+    } catch (...) {
+        char msg[512];
+        snprintf(msg, sizeof(msg), "ERROR:Excepcion desconocida|HEADER:%.100s", header);
+        env->ReleaseStringUTFChars(jpath, path);
+        g_model.reset();
+        return env->NewStringUTF(msg);
     }
 }
 
