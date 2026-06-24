@@ -36,6 +36,7 @@ include_directories(
 add_definitions(
     -DEIGEN_MAX_ALIGN_BYTES=0
     -DEIGEN_DONT_VECTORIZE
+    -D_USE_MATH_DEFINES
 )
 
 # ── Shared library ────────────────────────────────────────────────────────────
