@@ -40,6 +40,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
         }
+        debug {
+            minifyEnabled false
+        }
     }
 
     compileOptions {
@@ -53,6 +56,12 @@ android {
 
     buildFeatures {
         viewBinding true
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
     }
 }
 
