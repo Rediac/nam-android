@@ -9,7 +9,7 @@ class NamEngine {
     }
 
     external fun nativeGetVersion(): String
-    external fun nativeLoadModel(path: String): Boolean
+    external fun nativeLoadModel(path: String): String
     external fun nativeStartAudio(): Boolean
     external fun nativeStopAudio()
     external fun nativeUnloadModel()
@@ -18,7 +18,7 @@ class NamEngine {
     val version: String       get() = nativeGetVersion()
     val isModelLoaded: Boolean get() = nativeIsModelLoaded()
 
-    fun loadModel(path: String): Boolean = nativeLoadModel(path)
+    fun loadModel(path: String): String = nativeLoadModel(path)
     fun startAudio(): Boolean            = nativeStartAudio()
     fun stopAudio()                      = nativeStopAudio()
     fun unloadModel()                    = nativeUnloadModel()
