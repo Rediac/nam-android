@@ -9,7 +9,6 @@ set(NAM_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/NeuralAmpModelerCore)
 set(NAM_DIR      ${NAM_CORE_DIR}/NAM)
 
 # ── NeuralAmpModelerCore source files ─────────────────────────────────────────
-# Based on actual file listing from 2024-06-24
 set(NAM_SOURCES
     ${NAM_DIR}/activations.cpp
     ${NAM_DIR}/container.cpp
@@ -21,7 +20,6 @@ set(NAM_SOURCES
     ${NAM_DIR}/lstm.cpp
     ${NAM_DIR}/ring_buffer.cpp
     ${NAM_DIR}/util.cpp
-    ${NAM_DIR}/wavenet/wavenet.cpp
 )
 
 # ── Include paths ─────────────────────────────────────────────────────────────
