@@ -4,7 +4,6 @@
 #include <atomic>
 #include <cstring>
 #include <vector>
-#include <filesystem>
 #include <android/log.h>
 #include <aaudio/AAudio.h>
 
@@ -127,7 +126,7 @@ Java_com_rediac_namplayer_NamEngine_nativeLoadModel(JNIEnv* env, jobject, jstrin
         nam::activations::Activation::enable_fast_tanh();
 
         // get_dsp() is the official factory — works for A1 and A2
-        g_model = nam::get_dsp(std::filesystem::path(path));
+        g_model = nam::get_dsp(std::string(path));
 
         LOGI("Model loaded OK");
         env->ReleaseStringUTFChars(jpath, path);
