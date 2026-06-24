@@ -14,23 +14,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
-      - name: Force init submodules
+      - name: Download NeuralAmpModelerCore
         run: |
-          rm -rf app/src/main/cpp/NeuralAmpModelerCore
-          git submodule sync
-          git submodule update --init --recursive --force --depth 1
-          ls -la app/src/main/cpp/NeuralAmpModelerCore/ || echo "Submodule dir not found, cloning manually..."
-          if [ ! -d "app/src/main/cpp/NeuralAmpModelerCore/NAM" ]; then
-            echo "Manual clone..."
-            rm -rf app/src/main/cpp/NeuralAmpModelerCore
-            git clone --depth 1 https://github.com/sdatkinson/NeuralAmpModelerCore.git app/src/main/cpp/NeuralAmpModelerCore
-            cd app/src/main/cpp/NeuralAmpModelerCore
-            git submodule update --init --recursive --depth 1
-            cd -
-          fi
+          echo "Descargando NeuralAmpModelerCore..."
+          wget -q https://github.com/sdatkinson/NeuralAmpModelerCore/archive/refs/heads/main.zip -O /tmp/core.zip
+          unzip -q /tmp/core.zip -d /tmp/
+          mkdir -p app/src/main/cpp/NeuralAmpModelerCore
+          cp -r /tmp/NeuralAmpModelerCore-main/* app/src/main/cpp/NeuralAmpModelerCore/
+          
+          echo "Descargando Eigen..."
+          wget -q https://gitlab.com/libeigen/eigen/-/archive/master/eigen-master.zip -O /tmp/eigen.zip
+          unzip -q /tmp/eigen.zip -d /tmp/
+          mkdir -p app/src/main/cpp/NeuralAmpModelerCore/Dependencies
+          mv /tmp/eigen-master app/src/main/cpp/NeuralAmpModelerCore/Dependencies/eigen
+          
+          echo "Archivos del Core:"
           ls -la app/src/main/cpp/NeuralAmpModelerCore/NAM/
 
       - name: Setup Java
