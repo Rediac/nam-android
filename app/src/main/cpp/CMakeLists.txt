@@ -7,38 +7,40 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ── Paths ─────────────────────────────────────────────────────────────────────
 set(NAM_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/NeuralAmpModelerCore)
 set(NAM_DIR      ${NAM_CORE_DIR}/NAM)
-set(DEPS_DIR     ${NAM_CORE_DIR}/Dependencies)
 
 # ── NeuralAmpModelerCore source files ─────────────────────────────────────────
-# Real filenames verified from the repository
+# Based on actual file listing from 2024-06-24
 set(NAM_SOURCES
     ${NAM_DIR}/activations.cpp
+    ${NAM_DIR}/container.cpp
+    ${NAM_DIR}/conv1d.cpp
     ${NAM_DIR}/convnet.cpp
     ${NAM_DIR}/dsp.cpp
     ${NAM_DIR}/get_dsp.cpp
+    ${NAM_DIR}/linear.cpp
     ${NAM_DIR}/lstm.cpp
+    ${NAM_DIR}/ring_buffer.cpp
     ${NAM_DIR}/util.cpp
-    ${NAM_DIR}/wavenet.cpp
+    ${NAM_DIR}/wavenet/wavenet.cpp
 )
 
 # ── Include paths ─────────────────────────────────────────────────────────────
-# nlohmann/json is header-only, lives inside the repo (no separate submodule)
-# Eigen is a submodule under Dependencies/Eigen
 include_directories(
     ${NAM_CORE_DIR}
     ${NAM_DIR}
-    ${DEPS_DIR}/nlohmann
-    ${DEPS_DIR}/Eigen
+    ${NAM_DIR}/wavenet
+    ${NAM_CORE_DIR}/Dependencies/nlohmann
+    ${NAM_CORE_DIR}/Dependencies/eigen
+    ${NAM_CORE_DIR}/Dependencies/AudioDSPTools/include
 )
 
-# ── Eigen alignment fix for Android (important!) ──────────────────────────────
-# Prevents crashes from misaligned Eigen members on some Android compilers
+# ── Eigen alignment fix for Android ───────────────────────────────────────────
 add_definitions(
     -DEIGEN_MAX_ALIGN_BYTES=0
     -DEIGEN_DONT_VECTORIZE
 )
 
-# ── Shared library: JNI wrapper + NAM core ────────────────────────────────────
+# ── Shared library ────────────────────────────────────────────────────────────
 add_library(
     namplayer
     SHARED
