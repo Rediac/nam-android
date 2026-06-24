@@ -19,6 +19,7 @@ jobs:
 
       - name: Force init submodules
         run: |
+          rm -rf app/src/main/cpp/NeuralAmpModelerCore
           git submodule sync
           git submodule update --init --recursive --force --depth 1
           ls -la app/src/main/cpp/NeuralAmpModelerCore/ || echo "Submodule dir not found, cloning manually..."
